@@ -1,152 +1,177 @@
-function Player(name, identifier) {
-    this.name = name;
-    this.identifier = identifier;
-}
+// === Model ===
+const Model = (() => {
+    let player1 = null;
+    let player2 = null;
+    let currentPlayer = null;
 
-let player1, player2;
-let currentPlayer;
+    let gameBoard = [
+        ["", "", ""],
+        ["", "", ""],
+        ["", "", ""],
+    ];
 
-const player1Symbol = "X";
-const player2Symbol = "O";
-
-let gameBoard = [
-    ["", "", ""],
-    ["", "", ""],
-    ["", "", ""],
-];
-
-// function "initializeGame"
-function initializeGame() {
-    const name1 = document.getElementById("player1Name").value.trim();
-    const name2 = document.getElementById("player2Name").value.trim();
-
-    if (!name1 || !name2) {
-        alert("Пожалуйста, введите имена обоих игроков.");
-        return; // no names entered
+    function createPlayer(name, symbol) {
+        return { name, symbol };
     }
 
-    player1 = new Player(name1, player1Symbol);
-    player2 = new Player(name2, player2Symbol);
+    function initializePlayers(name1, name2) {
+        player1 = createPlayer(name1, "X");
+        player2 = createPlayer(name2, "O");
+        currentPlayer = player1;
+        resetBoard();
+    }
 
-    currentPlayer = player1;
+    function resetBoard() {
+        gameBoard = [["", "", ""], ["", "", ""], ["", "", ""]];
+    }
 
-    document.getElementById("playerNames").classList.add("hidden");
-    document.getElementById("gameBoard").innerHTML = ""; // clear the board
-    gameBoard = [["", "", ""], ["", "", ""], ["", "", ""]]; // reset board
-    createBoard();
-}
+    function getBoard() {
+        return gameBoard;
+    }
 
-// function "createBoard"
-function createBoard() {
+    function getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === player1 ? player2 : player1;
+    }
+
+    function makeMove(row, col) {
+        if (gameBoard[row][col] === "") {
+            gameBoard[row][col] = currentPlayer.symbol;
+            return true;
+        }
+        return false;
+    }
+
+    function checkWinner() {
+        const b = gameBoard;
+        for (let i = 0; i < 3; i++) {
+            if (b[i][0] && b[i][0] === b[i][1] && b[i][0] === b[i][2]) return true;
+            if (b[0][i] && b[0][i] === b[1][i] && b[0][i] === b[2][i]) return true;
+        }
+        if (b[0][0] && b[0][0] === b[1][1] && b[0][0] === b[2][2]) return true;
+        if (b[0][2] && b[0][2] === b[1][1] && b[0][2] === b[2][0]) return true;
+        return false;
+    }
+
+    function checkDraw() {
+        return gameBoard.flat().every(cell => cell !== "");
+    }
+
+    return {
+        initializePlayers,
+        getCurrentPlayer,
+        switchPlayer,
+        getBoard,
+        makeMove,
+        checkWinner,
+        checkDraw,
+    };
+})();
+
+
+// === View ===
+const View = (() => {
     const boardElement = document.getElementById("gameBoard");
+    const messageElement = document.getElementById("message");
+    const restartButton = document.getElementById("restartGame");
 
-    for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            cell.dataset.row = row;
-            cell.dataset.col = col;
+    function renderBoard(onClick) {
+        boardElement.innerHTML = "";
 
-            cell.addEventListener("click", () => handleCellClick(row, col));
-            boardElement.appendChild(cell);
+        for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+                const cell = document.createElement("div");
+                cell.classList.add("cell");
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.addEventListener("click", () => onClick(row, col));
+                boardElement.appendChild(cell);
+            }
         }
     }
-}
 
-// function click on cell`s
-function handleCellClick(row, col) {
-   if (makeMove(gameBoard, row, col)) {
-       const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
-       cell.textContent = currentPlayer.identifier;
+    function updateCell(row, col, symbol) {
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+            cell.textContent = symbol;
+        }
+    }
 
-       const winner = checkWinner(gameBoard);
-       if (winner) {
-           displayMessage(`Поздравляем! Победил ${currentPlayer.name}!`);
-           endGame();
-           return;
-       }
+    function displayMessage(msg) {
+        messageElement.textContent = msg;
+    }
 
-       if (checkDraw(gameBoard)) {
-           displayMessage("Игра закончилась вничью!");
-           endGame();
-           return;
-       }
+    function showRestartButton() {
+        restartButton.classList.remove("hidden");
+        restartButton.onclick = () => location.reload();
+    }
 
-       currentPlayer = currentPlayer === player1 ? player2 : player1;
-   }
-}
+    function disableBoard() {
+        document.querySelectorAll(".cell").forEach(cell => {
+            cell.style.pointerEvents = "none";
+        });
+    }
 
-// function "makeMove"
-function makeMove(board, row, col) {
-   if (board[row][col] === "") {
-       board[row][col] = currentPlayer.identifier; // Player id
-       return true;
-   } else {
-       alert("Эта ячейка уже занята. Попробуйте снова.");
-       return false;
-   }
-}
+    return {
+        renderBoard,
+        updateCell,
+        displayMessage,
+        showRestartButton,
+        disableBoard,
+    };
+})();
 
-// function "checkWinner"
-function checkWinner(board) {
-   for (let i = 0; i < 3; i++) {
-       if (
-           board[i][0] &&
-           board[i][0] === board[i][1] &&
-           board[i][0] === board[i][2]
-       ) {
-           return board[i][0]; // row winner
-       }
-       if (
-           board[0][i] &&
-           board[0][i] === board[1][i] &&
-           board[0][i] === board[2][i]
-       ) {
-           return board[0][i]; // column winner
-       }
-   }
 
-   if (
-       board[0][0] &&
-       board[0][0] === board[1][1] &&
-       board[0][0] === board[2][2]
-   ) {
-       return board[0][0]; // main diagonal winner
-   }
+// === Controller ===
+const Controller = (() => {
+    function startGame() {
+        const name1 = document.getElementById("player1Name").value.trim();
+        const name2 = document.getElementById("player2Name").value.trim();
 
-   if (
-       board[0][2] &&
-       board[0][2] === board[1][1] &&
-       board[0][2] === board[2][0]
-   ) {
-       return board[0][2]; // diagonal winner
-   }
+        if (!name1 || !name2) {
+            alert("Пожалуйста, введите имена обоих игроков.");
+            return;
+        }
 
-   return null; // no winner
-}
+        Model.initializePlayers(name1, name2);
+        document.getElementById("playerNames").classList.add("hidden");
 
-// function "checkDraw"
-function checkDraw(board) {
-   return board.flat().every((cell) => cell !== "");
-}
+        View.renderBoard(handleCellClick);
+    }
 
-// function "displayMessage"
-function displayMessage(message) {
-   const messageElement = document.getElementById("message");
-   messageElement.textContent = message;
+    function handleCellClick(row, col) {
+        if (!Model.makeMove(row, col)) {
+            alert("Эта ячейка уже занята.");
+            return;
+        }
 
-   const restartButton = document.getElementById("restartGame");
-   restartButton.classList.remove("hidden"); // button "restartGame"
+        const player = Model.getCurrentPlayer();
+        View.updateCell(row, col, player.symbol);
 
-   restartButton.onclick = () => location.reload(); // reload page
-}
+        if (Model.checkWinner()) {
+            View.displayMessage(`Победил ${player.name}! 🎉`);
+            View.disableBoard();
+            View.showRestartButton();
+            return;
+        }
 
-// function "endGame"
-function endGame() {
-   const cells = document.querySelectorAll(".cell");
-   cells.forEach(cell => cell.style.pointerEvents = "none");
-}
+        if (Model.checkDraw()) {
+            View.displayMessage("Ничья!");
+            View.disableBoard();
+            View.showRestartButton();
+            return;
+        }
 
-// event on button "startGame"
-document.getElementById("startGame").addEventListener("click", initializeGame);
+        Model.switchPlayer();
+    }
 
+    return {
+        startGame,
+    };
+})();
+
+// === Init ===
+document.getElementById("startGame").addEventListener("click", Controller.startGame);
