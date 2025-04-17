@@ -1,4 +1,4 @@
-// === Model ===
+// Model 
 const Model = (() => {
     let player1 = null;
     let player2 = null;
@@ -10,10 +10,13 @@ const Model = (() => {
         ["", "", ""],
     ];
 
-    function createPlayer(name, symbol) {
+    //createPlayer(name, symbol): создаёт объект игрока с именем и символом.
+    function createPlayer(name, symbol) { 
         return { name, symbol };
     }
 
+
+    //initializePlayers(name1, name2): инициализирует двух игроков и очищает игровое поле.
     function initializePlayers(name1, name2) {
         player1 = createPlayer(name1, "X");
         player2 = createPlayer(name2, "O");
@@ -21,22 +24,32 @@ const Model = (() => {
         resetBoard();
     }
 
+
+    // resetBoard(): сбрасывает игровое поле.
     function resetBoard() {
         gameBoard = [["", "", ""], ["", "", ""], ["", "", ""]];
     }
 
+
+    //getBoard(): возвращает текущее состояние поля.
     function getBoard() {
         return gameBoard;
     }
 
+
+    //getCurrentPlayer(): возвращает текущего игрока.
     function getCurrentPlayer() {
         return currentPlayer;
     }
 
+
+    //switchPlayer(): меняет текущего игрока.
     function switchPlayer() {
         currentPlayer = currentPlayer === player1 ? player2 : player1;
     }
 
+
+    //makeMove(row, col): делает ход, если ячейка пуста.
     function makeMove(row, col) {
         if (gameBoard[row][col] === "") {
             gameBoard[row][col] = currentPlayer.symbol;
@@ -45,6 +58,8 @@ const Model = (() => {
         return false;
     }
 
+
+    //checkWinner(): проверяет наличие победителя.
     function checkWinner() {
         const b = gameBoard;
         for (let i = 0; i < 3; i++) {
@@ -56,6 +71,8 @@ const Model = (() => {
         return false;
     }
 
+
+    //checkDraw(): проверяет ничью.
     function checkDraw() {
         return gameBoard.flat().every(cell => cell !== "");
     }
@@ -72,12 +89,18 @@ const Model = (() => {
 })();
 
 
-// === View ===
+
+
+
+
+// View 
 const View = (() => {
     const boardElement = document.getElementById("gameBoard");
     const messageElement = document.getElementById("message");
     const restartButton = document.getElementById("restartGame");
 
+
+    //renderBoard(onClick): отрисовывает игровое поле и назначает обработчик клика.
     function renderBoard(onClick) {
         boardElement.innerHTML = "";
 
@@ -93,6 +116,8 @@ const View = (() => {
         }
     }
 
+
+    //updateCell(row, col, symbol): обновляет содержимое ячейки.
     function updateCell(row, col, symbol) {
         const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
@@ -100,15 +125,21 @@ const View = (() => {
         }
     }
 
+
+    //displayMessage(msg): выводит сообщение.
     function displayMessage(msg) {
         messageElement.textContent = msg;
     }
 
+
+    //showRestartButton(): отображает кнопку перезапуска.
     function showRestartButton() {
         restartButton.classList.remove("hidden");
         restartButton.onclick = () => location.reload();
     }
 
+
+    //disableBoard(): блокирует доску от дальнейших кликов.
     function disableBoard() {
         document.querySelectorAll(".cell").forEach(cell => {
             cell.style.pointerEvents = "none";
@@ -125,8 +156,14 @@ const View = (() => {
 })();
 
 
-// === Controller ===
+
+
+
+
+// Controller 
 const Controller = (() => {
+
+    //startGame(): инициализирует игру, создаёт игроков и скрывает форму ввода.
     function startGame() {
         const name1 = document.getElementById("player1Name").value.trim();
         const name2 = document.getElementById("player2Name").value.trim();
@@ -142,6 +179,7 @@ const Controller = (() => {
         View.renderBoard(handleCellClick);
     }
 
+    //handleCellClick(row, col): обрабатывает клик по ячейке, делает ход и проверяет состояние игры.
     function handleCellClick(row, col) {
         if (!Model.makeMove(row, col)) {
             alert("Эта ячейка уже занята.");
@@ -173,5 +211,5 @@ const Controller = (() => {
     };
 })();
 
-// === Init ===
+// Init 
 document.getElementById("startGame").addEventListener("click", Controller.startGame);
